@@ -1,5 +1,6 @@
 package com.fedya.stuff;
 
+import com.fedya.exception.FoodBlockJoinTypesMismatch;
 import com.fedya.exception.InvalidFoodBlockState;
 
 public class FoodBlock {
@@ -41,6 +42,13 @@ public class FoodBlock {
 
   public void addItem() {
     ++count;
+  }
+
+  public void joinBlock(FoodBlock other) {
+    if (type != other.type) {
+      throw new FoodBlockJoinTypesMismatch("Join food blocks failed.", type, other.type);
+    }
+    count += other.count;
   }
 
   @Override

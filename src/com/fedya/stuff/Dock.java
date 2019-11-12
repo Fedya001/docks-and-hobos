@@ -2,18 +2,21 @@ package com.fedya.stuff;
 
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.Logger;
+import com.fedya.run.ModelSettings;
 import com.fedya.thread.Ship;
 import java.util.concurrent.locks.ReentrantLock;
 import org.slf4j.LoggerFactory;
 
 public class Dock {
 
+  String name;
   private FoodBlock storage;
   private ReentrantLock lock;
 
   private Logger logger;
 
   public Dock(String name, FoodBlock initialStorage) {
+    this.name = name;
     this.storage = initialStorage;
     this.lock = new ReentrantLock();
 
@@ -25,6 +28,10 @@ public class Dock {
     this(name, new FoodBlock(foodType, 0));
   }
 
+  public String getName() {
+    return name;
+  }
+
   public FoodBlock getStorage() {
     return storage;
   }
@@ -34,16 +41,30 @@ public class Dock {
   }
 
   public void unloadShip(Ship ship) {
-    try {
-      logger.info("Start unloading {}", ship.getName());
-      while (!ship.getFoodBlock().empty()) {
-        ship.getFoodBlock().extractItem();
-        Thread.sleep(5_000);
-        logger.info("Unloaded a {}", ship.getFoodBlock().getType().toString());
+    // Dock itself is not a thread, but unloading runs separate thread
+    new Thread(logger.getName() + " unloading thread") {
+      @Override
+      public void run() {
+        try {
+          lock.lock();
+          logger.info("Start unloading {}", ship);
+          while (!ship.getFoodBlock().empty()) {
+            ship.getFoodBlock().extractItem();
+            logger.info("Unloaded a {} from {}", ship.getFoodBlock().getType().toString(), ship.getShipName());
+            Thread.sleep(ModelSettings.SHIP_UNLOAD_SPEED.getValue());
+          }
+          logger.info("Unloaded {} successfully", ship);
+        } catch (InterruptedException ex) {
+          logger.error(ex.getMessage(), ex);
+        } finally {
+          lock.unlock();
+        }
+
+        // Resume ship thread
+        synchronized (ship) {
+          ship.notify();
+        }
       }
-      logger.info("Unloaded {} successfully", ship.getName());
-    } catch (InterruptedException ex) {
-      logger.error(ex.getMessage(), ex);
-    }
+    }.start();
   }
 }

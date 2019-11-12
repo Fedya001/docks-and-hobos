@@ -6,6 +6,7 @@ import com.fedya.run.ModelSettings;
 import com.fedya.stuff.Dock;
 import com.fedya.stuff.FoodBlock;
 import com.fedya.thread.Ship;
+import com.fedya.thread.Ship.Type;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
@@ -22,17 +23,17 @@ public class ShipGenerator extends Thread {
   private Random generator;
   private final List<String> SHIP_NAMES_POOL = new ArrayList<String>() {
     {
-      add("Titanic ship");
-      add("Aurora ship");
-      add("Dolphin ship");
-      add("Pioneer ship");
-      add("Mary ship");
-      add("Secret ship");
-      add("Emma ship");
-      add("Thunder ship");
-      add("Jellyfish ship");
-      add("Marine band ship");
-      add("Jane ship");
+      add("Titanic%d ship");
+      add("Aurora%d ship");
+      add("Dolphin%d ship");
+      add("Pioneer%d ship");
+      add("Mary%d ship");
+      add("Secret%d ship");
+      add("Emma%d ship");
+      add("Thunder%d ship");
+      add("Jellyfish%d ship");
+      add("Marine%d band ship");
+      add("Jane%d ship");
     }
   };
 
@@ -64,7 +65,8 @@ public class ShipGenerator extends Thread {
       FoodBlock.Type foodType = FoodBlock.Type.values()[foodTypeIndex];
 
       Ship ship = new Ship(
-        SHIP_NAMES_POOL.get(Math.abs(generator.nextInt()) % SHIP_NAMES_POOL.size()),
+        String.format(SHIP_NAMES_POOL.get(Math.abs(generator.nextInt()) % SHIP_NAMES_POOL.size()),
+          Math.abs(new Random().nextInt()) % 100),
         Ship.Type.values()[Math.abs(generator.nextInt()) % Ship.Type.values().length],
         foodType,
         docks.get(foodTypeIndex),
@@ -73,7 +75,7 @@ public class ShipGenerator extends Thread {
 
       ship.start();
 
-      logger.info("Created a ship {}", ship.getName());
+      logger.info("Created a {}", ship);
       try {
         Thread.sleep(ModelSettings.GENERATOR_FREQUENCY.getValue());
       } catch (InterruptedException ex) {

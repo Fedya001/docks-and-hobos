@@ -1,13 +1,19 @@
 package com.fedya.run;
 
-import com.fedya.stuff.FoodBlock;
+import com.fedya.stuff.Dock;
+import com.fedya.stuff.FoodBlock.Type;
+import com.fedya.thread.Ship;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.BlockingQueue;
 
 public class Main {
 
   public static void main(String[] args) {
-    FoodBlock block = new FoodBlock(FoodBlock.Type.BREAD, 5);
-    FoodBlock block2 = new FoodBlock(FoodBlock.Type.MAYO, 6);
-    block2.joinBlock(block);
-    System.out.print(block2);
+    Dock breadDock = new Dock("Bread dock", Type.BREAD);
+    Dock sausageDock = new Dock("Sausage dock", Type.SAUSAGE);
+    Dock mayoDock = new Dock("Mayo dock", Type.MAYO);
+
+    BlockingQueue<Ship> narrowChannel =
+      new ArrayBlockingQueue<Ship>(ModelSettings.NARROW_CHANNEL_CAPACITY.getValue());
   }
 }

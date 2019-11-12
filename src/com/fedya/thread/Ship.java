@@ -38,7 +38,7 @@ public class Ship extends Thread {
     String name, Type type, FoodBlock.Type foodType,
     Dock acceptingDock, BlockingQueue<Ship> narrowChannel
   ) {
-    super(name);
+    super(name + " thread");
 
     this.type = type;
     this.foodBlock = new FoodBlock(foodType, type.getValue());
@@ -51,7 +51,7 @@ public class Ship extends Thread {
     this.acceptingDock = acceptingDock;
     this.narrowChannel = narrowChannel;
 
-    this.logger = (Logger) LoggerFactory.getLogger(this.getName());
+    this.logger = (Logger) LoggerFactory.getLogger(name);
     logger.setLevel(Level.INFO);
   }
 
@@ -69,7 +69,13 @@ public class Ship extends Thread {
 
   @Override
   public void run() {
-
+    logger.info("Forward towards adventure!");
+    try {
+      Thread.sleep(4_000);
+    } catch (InterruptedException e) {
+      e.printStackTrace();
+    }
+    logger.info("Bye everyone. I go back home!");
   }
 
 }

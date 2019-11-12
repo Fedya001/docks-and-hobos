@@ -15,6 +15,9 @@ public class FoodBlock {
   public FoodBlock(Type type, int count) {
     this.type = type;
     this.count = count;
+    if (count < 0) {
+      throw new InvalidFoodBlockState("Can't initialize FoodBlock with negative count", this);
+    }
   }
 
   public Type getType() {
@@ -29,7 +32,7 @@ public class FoodBlock {
     return count == 0;
   }
 
-  public void extractItem() throws InvalidFoodBlockState {
+  public void extractItem() {
     if (count <= 0) {
       throw new InvalidFoodBlockState("FoodBlock is empty, can't extract item", this);
     }

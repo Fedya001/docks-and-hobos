@@ -1,7 +1,6 @@
 package com.fedya.stuff;
 
 import com.fedya.exception.FoodBlockJoinTypesMismatch;
-import com.fedya.exception.InvalidFoodBlockState;
 
 public class FoodBlock {
   public enum Type {
@@ -14,11 +13,11 @@ public class FoodBlock {
   private int count;
 
   public FoodBlock(Type type, int count) {
+    if (count < 0) {
+      throw new IllegalArgumentException("Can't initialize FoodBlock with negative count");
+    }
     this.type = type;
     this.count = count;
-    if (count < 0) {
-      throw new InvalidFoodBlockState("Can't initialize FoodBlock with negative count", this);
-    }
   }
 
   public Type getType() {
@@ -33,20 +32,23 @@ public class FoodBlock {
     return count == 0;
   }
 
-  public void extractItem() {
-    if (count <= 0) {
-      throw new InvalidFoodBlockState("FoodBlock is empty, can't extract item", this);
+  public void extractItems(int amount) {
+    if (amount < 0 || count - amount < 0) {
+      throw new IllegalArgumentException("Invalid amount of products to extract");
     }
-    --count;
+    count -= amount;
   }
 
-  public void addItem() {
-    ++count;
+  public void addItems(int amount) {
+    if (amount < 0) {
+      throw new IllegalArgumentException("Invalid amount of products to add");
+    }
+    count += amount;
   }
 
   public void joinBlock(FoodBlock other) {
     if (type != other.type) {
-      throw new FoodBlockJoinTypesMismatch("Join food blocks failed.", type, other.type);
+      throw new FoodBlockJoinTypesMismatch(type, other.type);
     }
     count += other.count;
   }

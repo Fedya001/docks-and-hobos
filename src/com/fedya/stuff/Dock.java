@@ -49,8 +49,9 @@ public class Dock {
           lock.lock();
           logger.info("Start unloading {}", ship);
           while (!ship.getFoodBlock().empty()) {
-            ship.getFoodBlock().extractItem();
-            logger.info("Unloaded a {} from {}", ship.getFoodBlock().getType().toString(), ship.getShipName());
+            ship.getFoodBlock().extractItems(ModelSettings.SHIP_UNLOAD_COUNT.getValue());
+            logger.info("Unloaded {} {}s from {}", ModelSettings.SHIP_UNLOAD_COUNT.getValue(),
+              ship.getFoodBlock().getType().toString(), ship.getShipName());
             Thread.sleep(ModelSettings.SHIP_UNLOAD_SPEED.getValue());
           }
           logger.info("Unloaded {} successfully", ship);

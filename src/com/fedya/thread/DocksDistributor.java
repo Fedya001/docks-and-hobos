@@ -22,8 +22,6 @@ public class DocksDistributor extends Thread {
     Dock breadDock, Dock sausageDock, Dock mayoDock
   ) {
     super(name + " thread");
-    // DocksDistributor with infinite loop is daemon
-    setDaemon(true);
 
     this.narrowChannel = narrowChannel;
     this.docks = new ArrayList<Dock>() {{

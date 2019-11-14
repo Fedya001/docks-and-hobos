@@ -43,8 +43,6 @@ public class ShipGenerator extends Thread {
     Dock breadDock, Dock sausageDock, Dock mayoDock
   ) {
     super(name + " thread");
-    // Generator with infinite loop is daemon
-    setDaemon(true);
 
     this.narrowChannel = narrowChannel;
     this.docks = new ArrayList<Dock>() {{

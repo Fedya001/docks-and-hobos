@@ -43,7 +43,6 @@ public class Ship extends Thread {
     Dock acceptingDock, BlockingQueue<Ship> narrowChannel
   ) {
     super(shipName + " thread");
-    setDaemon(false);
 
     this.shipName = shipName;
     this.type = type;

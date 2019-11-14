@@ -11,6 +11,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.TimeUnit;
 import org.slf4j.LoggerFactory;
 
 public class ShipGenerator extends Thread {
@@ -62,18 +63,28 @@ public class ShipGenerator extends Thread {
       int foodTypeIndex = Math.abs(generator.nextInt()) % FoodBlock.Type.values().length;
       FoodBlock.Type foodType = FoodBlock.Type.values()[foodTypeIndex];
 
-      Ship ship = new Ship(
-        String.format(SHIP_NAMES_POOL.get(Math.abs(generator.nextInt()) % SHIP_NAMES_POOL.size()),
-          Math.abs(new Random().nextInt()) % 100),
-        Ship.Type.values()[Math.abs(generator.nextInt()) % Ship.Type.values().length],
-        foodType,
-        docks.get(foodTypeIndex),
-        narrowChannel
-      );
+      try {
+        Ship ship = new Ship(
+          String.format(SHIP_NAMES_POOL.get(Math.abs(generator.nextInt()) % SHIP_NAMES_POOL.size()),
+            Math.abs(new Random().nextInt()) % 100),
+          Type.values()[Math.abs(generator.nextInt()) % Type.values().length],
+          foodType);
+        logger.info("Created a {}", ship);
 
-      ship.start();
+        if (narrowChannel.offer(ship,
+          ModelSettings.SHIP_CHANNEL_AWAIT_TIME.getValue(),
+          TimeUnit.MILLISECONDS
+        )) {
+          logger.info("{} successfully joined narrow channel. Narrow channel: {} out of {}",
+            ship, narrowChannel.size(), ModelSettings.NARROW_CHANNEL_CAPACITY.getValue() - 1);
+        } else {
+          logger.warn("Await time expired, drowning ...");
+          return;
+        }
+      } catch (InterruptedException e) {
+        e.printStackTrace();
+      }
 
-      logger.info("Created a {}", ship);
       try {
         Thread.sleep(ModelSettings.GENERATOR_FREQUENCY.getValue());
       } catch (InterruptedException ex) {

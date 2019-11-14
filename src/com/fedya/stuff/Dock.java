@@ -54,7 +54,7 @@ public class Dock {
               ship.getFoodBlock().getType().toString(), ship.getShipName());
             Thread.sleep(ModelSettings.SHIP_UNLOAD_SPEED.getValue());
           }
-          logger.info("Unloaded {} successfully", ship);
+          logger.info("SUCCESS: unloaded {}. {} goes back home!", ship, ship);
         } catch (InterruptedException ex) {
           logger.error(ex.getMessage(), ex);
         } finally {

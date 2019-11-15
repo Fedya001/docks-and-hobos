@@ -4,21 +4,55 @@ import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.Logger;
 import com.fedya.run.ModelSettings;
 import com.fedya.thread.Ship;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import org.slf4j.LoggerFactory;
 
 public class Dock {
 
-  String name;
+  private String name;
   private FoodBlock storage;
-  private ReentrantLock lock;
+  private Lock lock;
 
+  private ThreadPoolExecutor unloadingThreadPool;
   private Logger logger;
+
+
+  private class UnloadTask implements Runnable {
+    private Ship ship;
+
+    public UnloadTask(Ship ship) {
+      this.ship = ship;
+    }
+
+    @Override
+    public void run() {
+      try {
+        lock.lock();
+        logger.info("Start unloading {}", ship);
+        while (!ship.getFoodBlock().empty()) {
+          ship.getFoodBlock().extractItems(ModelSettings.SHIP_UNLOAD_COUNT.getValue());
+          logger.info("Unloaded {} {}s from {}", ModelSettings.SHIP_UNLOAD_COUNT.getValue(),
+            ship.getFoodBlock().getType().toString(), ship.getShipName());
+          Thread.sleep(ModelSettings.SHIP_UNLOAD_SPEED.getValue());
+        }
+        logger.info("SUCCESS: unloaded {}. {} goes back home!", ship, ship);
+      } catch (InterruptedException ex) {
+        logger.error(ex.getMessage(), ex);
+      } finally {
+        lock.unlock();
+      }
+    }
+  }
 
   public Dock(String name, FoodBlock initialStorage) {
     this.name = name;
     this.storage = initialStorage;
     this.lock = new ReentrantLock();
+
+    this.unloadingThreadPool = (ThreadPoolExecutor) Executors.newFixedThreadPool(1);
 
     this.logger = (Logger) LoggerFactory.getLogger(name);
     logger.setLevel(Level.INFO);
@@ -36,36 +70,12 @@ public class Dock {
     return storage;
   }
 
-  public ReentrantLock getLock() {
+  public Lock getLock() {
     return lock;
   }
 
   public void unloadShip(Ship ship) {
     // Dock itself is not a thread, but unloading runs separate thread
-    new Thread(logger.getName() + " unloading thread") {
-      @Override
-      public void run() {
-        try {
-          lock.lock();
-          logger.info("Start unloading {}", ship);
-          while (!ship.getFoodBlock().empty()) {
-            ship.getFoodBlock().extractItems(ModelSettings.SHIP_UNLOAD_COUNT.getValue());
-            logger.info("Unloaded {} {}s from {}", ModelSettings.SHIP_UNLOAD_COUNT.getValue(),
-              ship.getFoodBlock().getType().toString(), ship.getShipName());
-            Thread.sleep(ModelSettings.SHIP_UNLOAD_SPEED.getValue());
-          }
-          logger.info("SUCCESS: unloaded {}. {} goes back home!", ship, ship);
-        } catch (InterruptedException ex) {
-          logger.error(ex.getMessage(), ex);
-        } finally {
-          lock.unlock();
-        }
-
-        // Resume ship thread
-        synchronized (ship) {
-          ship.notify();
-        }
-      }
-    }.start();
+    unloadingThreadPool.execute(new UnloadTask(ship));
   }
 }

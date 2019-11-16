@@ -1,6 +1,7 @@
 package com.fedya.run;
 
 import com.fedya.stuff.BurningBarrel;
+import com.fedya.stuff.CookeryPlace;
 import com.fedya.stuff.Dock;
 import com.fedya.stuff.FoodBlock.Type;
 import com.fedya.thread.DocksDistributor;
@@ -45,13 +46,19 @@ public class Main {
       new ShipGenerator("Generator", narrowChannel, breadDock, sausageDock, mayoDock);
     shipGenerator.start();
 
+    List<CookeryPlace> cookeryPlaces =
+      new ArrayList<CookeryPlace>(ModelSettings.COOKING_HOBOS_NUMBER.getValue());
+    for (int placeIndex = 0; placeIndex < ModelSettings.COOKING_HOBOS_NUMBER.getValue(); ++placeIndex) {
+      cookeryPlaces.add(new CookeryPlace());
+    }
+
     List<Hobo> hobos = new ArrayList<Hobo>();
 
     Phaser hoboPhaser = new Phaser();
     BurningBarrel burningBarrel = new BurningBarrel(hoboPhaser);
     for (int hoboIndex = 0; hoboIndex < ModelSettings.HOBOS_NUMBER.getValue(); ++hoboIndex) {
       Hobo hobo = new Hobo(HOBOS_NAMES.get(hoboIndex), hoboPhaser, burningBarrel,
-        breadDock, sausageDock, mayoDock);
+        cookeryPlaces, breadDock, sausageDock, mayoDock);
       hobos.add(hobo);
       hobo.start();
     }

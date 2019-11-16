@@ -30,19 +30,20 @@ public class Dock {
     @Override
     public void run() {
       try {
-        lock.lock();
         logger.info("Start unloading {}", ship);
+
         while (!ship.getFoodBlock().empty()) {
           ship.getFoodBlock().extractItems(ModelSettings.SHIP_UNLOAD_COUNT.getValue());
           logger.info("Unloaded {} {}s from {}", ModelSettings.SHIP_UNLOAD_COUNT.getValue(),
             ship.getFoodBlock().getType().toString(), ship.getShipName());
           Thread.sleep(ModelSettings.SHIP_UNLOAD_SPEED.getValue());
+          lock.lock();
+          storage.addItems(ModelSettings.SHIP_UNLOAD_COUNT.getValue());
+          lock.unlock();
         }
         logger.info("SUCCESS: unloaded {}. {} goes back home!", ship, ship);
       } catch (InterruptedException ex) {
         logger.error(ex.getMessage(), ex);
-      } finally {
-        lock.unlock();
       }
     }
   }

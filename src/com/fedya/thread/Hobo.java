@@ -50,6 +50,7 @@ public class Hobo extends Thread implements EventObserver {
   private Logger logger;
 
   public Hobo(String name, Phaser phaser, BurningBarrel burningBarrel,
+    List<CookeryPlace> cookeryPlaces,
     Dock breadDock, Dock sausageDock, Dock mayoDock) {
 
     super(name + " thread");
@@ -66,9 +67,7 @@ public class Hobo extends Thread implements EventObserver {
     this.phaser.register();
     this.burningBarrel = burningBarrel;
 
-
-    this.cookeryPlaces =
-      new ArrayList<CookeryPlace>(ModelSettings.COOKING_HOBOS_NUMBER.getValue());
+    this.cookeryPlaces = cookeryPlaces;
 
     this.random = new Random();
     this.logger = (Logger) LoggerFactory.getLogger(name);
@@ -101,24 +100,16 @@ public class Hobo extends Thread implements EventObserver {
 
           // TODO: now if sandwich was prepared, when hobo started to steal food,
           //  then all hobos will wait that hobo, until he comes
-          // Try to lock() Dock's lock to steal food
           try {
-            if (dock.getLock()
-              .tryLock(ModelSettings.SHIP_UNLOAD_SPEED.getValue(), TimeUnit.MILLISECONDS)) {
-              // Inner try block looks terrible. Is it possible to get a lock
-              // without inner try block? Please, suggest a fix.
-              try {
-                if (!dock.getStorage().empty()) {
-                  dock.getStorage().extractItems(1);
-                  logger.info("Steal a {}", FoodBlock.Type.values()[stealIndex]);
-                  Thread.sleep(ModelSettings.STEAL_DURATION.getValue());
-                  burningBarrel.getLatchByType(FoodBlock.Type.values()[stealIndex]).countDown();
-                }
-              } catch (InterruptedException ex) {
-                logger.error(ex.getMessage(), ex);
-              } finally {
-                dock.getLock().unlock();
-              }
+            // wait a bit to get a lock
+            if (!dock.getStorage().empty() && dock.getLock().tryLock(50, TimeUnit.MILLISECONDS)) {
+              dock.getLock().lock();
+              dock.getStorage().extractItems(1);
+              dock.getLock().unlock();
+
+              logger.info("Steal a {}", FoodBlock.Type.values()[stealIndex]);
+              Thread.sleep(ModelSettings.STEAL_DURATION.getValue());
+              burningBarrel.getLatchByType(FoodBlock.Type.values()[stealIndex]).countDown();
             }
           } catch (InterruptedException ex) {
             logger.error(ex.getMessage(), ex);
@@ -146,9 +137,8 @@ public class Hobo extends Thread implements EventObserver {
         return breadDock;
       case SAUSAGE:
         return sausageDock;
-      case MAYO:
+      default:
         return mayoDock;
     }
-    return null;
   }
 }

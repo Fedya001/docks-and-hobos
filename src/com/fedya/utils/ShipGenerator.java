@@ -79,7 +79,6 @@ public class ShipGenerator extends Thread {
             ship, narrowChannel.size(), ModelSettings.NARROW_CHANNEL_CAPACITY.getValue() - 1);
         } else {
           logger.warn("Await time expired, drowning ...");
-          return;
         }
       } catch (InterruptedException e) {
         e.printStackTrace();

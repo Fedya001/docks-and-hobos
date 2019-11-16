@@ -98,7 +98,8 @@ public class Hobo extends Thread implements EventObserver {
         while (!sandwichReady) {
           stole = false;
 
-          int stealIndex = Math.abs(random.nextInt()) % Type.values().length;
+          // Funny fact Integer.MIN_VALUE == -Integer.MIN_VALUE \forall programming languages !
+          int stealIndex = random.nextInt(Type.values().length);
           Dock dock = getDockByType(FoodBlock.Type.values()[stealIndex]);
 
           // TODO: now if sandwich was prepared, when hobo started to steal food,
@@ -136,7 +137,7 @@ public class Hobo extends Thread implements EventObserver {
         phaser.arriveAndAwaitAdvance();
 
         if (random.nextDouble() < TALKATIVENESS_FACTOR) {
-          logger.info(HOBO_PHRASE_POOL.get(Math.abs(random.nextInt()) % HOBO_PHRASE_POOL.size()));
+          logger.info(HOBO_PHRASE_POOL.get(random.nextInt(HOBO_PHRASE_POOL.size())));
         }
       }
     }

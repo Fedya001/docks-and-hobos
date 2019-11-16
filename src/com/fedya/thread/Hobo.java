@@ -93,23 +93,40 @@ public class Hobo extends Thread implements EventObserver {
       }
 
       if (!grabbed) {
+        boolean stole;
         // Hobo didn't get a cookeryPlace and have to steal and carry food
         while (!eatSandwichLock.tryLock()) {
+          stole = false;
+
           int stealIndex = Math.abs(random.nextInt()) % Type.values().length;
           Dock dock = getDockByType(FoodBlock.Type.values()[stealIndex]);
 
           // TODO: now if sandwich was prepared, when hobo started to steal food,
           //  then all hobos will wait that hobo, until he comes
           try {
-            // wait a bit to get a lock
-            if (!dock.getStorage().empty() && dock.getLock().tryLock(50, TimeUnit.MILLISECONDS)) {
-              dock.getLock().lock();
-              dock.getStorage().extractItems(1);
-              dock.getLock().unlock();
+            // Wait a bit to get a lock
+            if (dock.getLock().tryLock(50, TimeUnit.MILLISECONDS)) {
+              logger.debug("Get a lock of {} dock", FoodBlock.Type.values()[stealIndex]);
+              if (!dock.getStorage().empty()) {
+                dock.getStorage().extractItems(1);
+                stole = true;
 
-              logger.info("Steal a {}", FoodBlock.Type.values()[stealIndex]);
+                logger.info("Steal a {} from {} dock. Dock: {} left",
+                  FoodBlock.Type.values()[stealIndex],
+                  FoodBlock.Type.values()[stealIndex],
+                  dock.getStorage().getCount());
+                burningBarrel.getLatchByType(FoodBlock.Type.values()[stealIndex]).countDown();
+              }
+              dock.getLock().unlock();
+              logger.debug("Release {} dock lock", FoodBlock.Type.values()[stealIndex]);
+            } else {
+              logger.debug("Didn't get a lock of {} dock", FoodBlock.Type.values()[stealIndex]);
+            }
+
+            if (stole) {
+              // Hobo sleeps outside of the lock
+              // (otherwise unloading thread wouldn't be able to unload anything)
               Thread.sleep(ModelSettings.STEAL_DURATION.getValue());
-              burningBarrel.getLatchByType(FoodBlock.Type.values()[stealIndex]).countDown();
             }
           } catch (InterruptedException ex) {
             logger.error(ex.getMessage(), ex);

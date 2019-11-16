@@ -64,7 +64,7 @@ public class DocksDistributor extends Thread {
         // 3. After inner thread unloaded a ship and unlocked the targetDock,
         // DocksDistributor locks the Dock and runs the unloading thread
         // (which waits until DockDistributor unlocks the Docks, but it happens in a moment)
-        // A bit messy, but it works ...
+        // A bit messy, but it works ... Please, suggest a fix.
         targetDock.getLock().lock();
         logger.info("Push {} to {}", ship, targetDock.getName());
         targetDock.unloadShip(ship);

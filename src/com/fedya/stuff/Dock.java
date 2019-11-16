@@ -6,6 +6,7 @@ import com.fedya.run.ModelSettings;
 import com.fedya.thread.Ship;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import org.slf4j.LoggerFactory;
@@ -21,6 +22,7 @@ public class Dock {
 
 
   private class UnloadTask implements Runnable {
+
     private Ship ship;
 
     public UnloadTask(Ship ship) {
@@ -32,14 +34,34 @@ public class Dock {
       try {
         logger.info("Start unloading {}", ship);
 
+        boolean unloaded;
         while (!ship.getFoodBlock().empty()) {
-          ship.getFoodBlock().extractItems(ModelSettings.SHIP_UNLOAD_COUNT.getValue());
-          logger.info("Unloaded {} {}s from {}", ModelSettings.SHIP_UNLOAD_COUNT.getValue(),
-            ship.getFoodBlock().getType().toString(), ship.getShipName());
-          Thread.sleep(ModelSettings.SHIP_UNLOAD_SPEED.getValue());
-          lock.lock();
-          storage.addItems(ModelSettings.SHIP_UNLOAD_COUNT.getValue());
-          lock.unlock();
+          unloaded = false;
+
+          // Wait a bit to get a lock
+          if (lock.tryLock(50, TimeUnit.MILLISECONDS)) {
+            logger.debug("Get a lock of {}", name);
+
+            ship.getFoodBlock().extractItems(ModelSettings.SHIP_UNLOAD_COUNT.getValue());
+            storage.addItems(ModelSettings.SHIP_UNLOAD_COUNT.getValue());
+            unloaded = true;
+
+            logger.info("Unloading {} {}s from {}... DONE. "
+                + "{Dock: {} left. Ship: {} left}", ModelSettings.SHIP_UNLOAD_COUNT.getValue(),
+              ship.getFoodBlock().getType().toString(), ship.getShipName(),
+              storage.getCount(), ship.getFoodBlock().getCount());
+
+            lock.unlock();
+            logger.debug("Release a lock of {}", name);
+          } else {
+            logger.debug("Didn't get a lock of {}", name);
+          }
+
+          if (unloaded) {
+            // Unloading thread sleeps outside of the lock
+            // (otherwise hobos wouldn't be able to steal anything)
+            Thread.sleep(ModelSettings.SHIP_UNLOAD_SPEED.getValue());
+          }
         }
         logger.info("SUCCESS: unloaded {}. {} goes back home!", ship, ship);
       } catch (InterruptedException ex) {

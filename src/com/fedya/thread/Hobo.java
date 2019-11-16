@@ -36,8 +36,8 @@ public class Hobo extends Thread implements EventObserver {
   private Dock sausageDock;
   private Dock mayoDock;
 
-  // This eatSandwichLock unlocks when sandwich is ready.
-  private Lock eatSandwichLock;
+  // true when sandwich is ready.
+  private volatile boolean sandwichReady;
 
   // All hobos are synchronized after each sandwich
   private Phaser phaser;
@@ -60,8 +60,6 @@ public class Hobo extends Thread implements EventObserver {
     this.breadDock = breadDock;
     this.sausageDock = sausageDock;
     this.mayoDock = mayoDock;
-    this.eatSandwichLock = new ReentrantLock();
-    eatSandwichLock.lock();
 
     this.phaser = phaser;
     this.phaser.register();
@@ -81,6 +79,8 @@ public class Hobo extends Thread implements EventObserver {
 
     // Hobo behaviour pattern cycle
     while (true) {
+      sandwichReady = false;
+
       // Step 1. Try to get a cookeryPlace
       boolean grabbed = false;
       for (CookeryPlace cookeryPlace : cookeryPlaces) {
@@ -95,7 +95,7 @@ public class Hobo extends Thread implements EventObserver {
       if (!grabbed) {
         boolean stole;
         // Hobo didn't get a cookeryPlace and have to steal and carry food
-        while (!eatSandwichLock.tryLock()) {
+        while (!sandwichReady) {
           stole = false;
 
           int stealIndex = Math.abs(random.nextInt()) % Type.values().length;
@@ -145,7 +145,7 @@ public class Hobo extends Thread implements EventObserver {
   @Override
   public void updateState() {
     // ObservableEvent notifies subscribers, i.e. unlocks the lock
-    eatSandwichLock.unlock();
+    sandwichReady = true;
   }
 
   private Dock getDockByType(FoodBlock.Type type) {

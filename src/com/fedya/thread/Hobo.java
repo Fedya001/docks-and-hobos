@@ -77,7 +77,7 @@ public class Hobo extends Thread implements EventObserver {
   @Override
   public void run() {
     logger.info("I am born!");
-    final double TALKATIVENESS_FACTOR = 0.25;
+    final double TALKATIVENESS_FACTOR = 0.5;
 
     // Hobo behaviour pattern cycle
     while (true) {

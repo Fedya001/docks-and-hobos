@@ -42,6 +42,7 @@ public class BurningBarrel implements ObservableEvent {
 
       notifyObservers();
       logger.info("NOTIFIED OBSERVERS. SANDWICH #{}\n", phaser.getPhase());
+      reset();
     }
   }
 

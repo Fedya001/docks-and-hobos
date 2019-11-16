@@ -41,11 +41,13 @@ public class BurningBarrel implements ObservableEvent {
       }
 
       notifyObservers();
-      logger.info("Notified observers. Sandwich #{}", phaser.getPhase());
+      logger.info("NOTIFIED OBSERVERS. SANDWICH #{}\n", phaser.getPhase());
     }
   }
 
   public BurningBarrel(Phaser phaser) {
+    this.phaser = phaser;
+
     this.notifyingThreadPool = (ThreadPoolExecutor) Executors.newFixedThreadPool(1);
     this.observers = new ArrayList<EventObserver>();
     this.reset();

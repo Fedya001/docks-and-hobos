@@ -52,15 +52,13 @@ public class Main {
       cookeryPlaces.add(new CookeryPlace());
     }
 
-    List<Hobo> hobos = new ArrayList<Hobo>();
-
     Phaser hoboPhaser = new Phaser();
     BurningBarrel burningBarrel = new BurningBarrel(hoboPhaser);
     for (int hoboIndex = 0; hoboIndex < ModelSettings.HOBOS_NUMBER.getValue(); ++hoboIndex) {
       Hobo hobo = new Hobo(HOBOS_NAMES.get(hoboIndex), hoboPhaser, burningBarrel,
         cookeryPlaces, breadDock, sausageDock, mayoDock);
-      hobos.add(hobo);
       hobo.start();
+      burningBarrel.registerObserver(hobo);
     }
 
     // Main thread waits for a while generator creates at least one ship

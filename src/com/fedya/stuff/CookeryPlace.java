@@ -1,5 +1,6 @@
 package com.fedya.stuff;
 
+import ch.qos.logback.classic.Logger;
 import java.util.concurrent.Phaser;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
@@ -15,10 +16,11 @@ public class CookeryPlace {
     lock = new ReentrantLock();
   }
 
-  public boolean grab(Phaser phaser) {
+  public boolean grab(Phaser phaser, Logger logger) {
     if (!lock.tryLock()) {
       return false;
     }
+    logger.info("Grabbed a cookery place!");
     phaser.arriveAndAwaitAdvance();
     lock.unlock();
     return true;

@@ -12,7 +12,9 @@ import org.slf4j.LoggerFactory;
 public class DocksDistributor extends Thread {
 
   private BlockingQueue<Ship> narrowChannel;
-  private List<Dock> docks;
+  private Dock breadDock;
+  private Dock sausageDock;
+  private Dock mayoDock;
 
   private Logger logger;
 
@@ -24,11 +26,9 @@ public class DocksDistributor extends Thread {
     super(name + " thread");
 
     this.narrowChannel = narrowChannel;
-    this.docks = new ArrayList<Dock>() {{
-      add(breadDock);
-      add(sausageDock);
-      add(mayoDock);
-    }};
+    this.breadDock = breadDock;
+    this.sausageDock = sausageDock;
+    this.mayoDock = mayoDock;
 
     this.logger = (Logger) LoggerFactory.getLogger(name);
     logger.setLevel(Level.INFO);
@@ -45,13 +45,13 @@ public class DocksDistributor extends Thread {
         Dock targetDock = null;
         switch (ship.getFoodBlock().getType()) {
           case BREAD:
-            targetDock = docks.get(0);
+            targetDock = breadDock;
             break;
           case SAUSAGE:
-            targetDock = docks.get(1);
+            targetDock = sausageDock;
             break;
           case MAYO:
-            targetDock = docks.get(2);
+            targetDock = mayoDock;
             break;
         }
 

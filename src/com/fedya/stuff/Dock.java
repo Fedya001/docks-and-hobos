@@ -15,7 +15,15 @@ public class Dock {
 
   private String name;
   private FoodBlock storage;
-  private Lock lock;
+
+  // This lock is intended for Hobo and Dock relations
+  // It's discrete, i.e. thread doesn't sleep when locking it
+  private Lock discreteLock;
+
+  // This lock is intended for DocksDistributor and Dock relations
+  // It is used to lock the Dock when it is busy with some ship and
+  // not allow DockDistributor to give it a new task
+  private Lock busyLock;
 
   private ThreadPoolExecutor unloadingThreadPool;
   private Logger logger;
@@ -32,6 +40,7 @@ public class Dock {
     @Override
     public void run() {
       try {
+        busyLock.lock();
         logger.info("Start unloading {}", ship);
 
         boolean unloaded;
@@ -39,7 +48,7 @@ public class Dock {
           unloaded = false;
 
           // Wait a bit to get a lock
-          if (lock.tryLock(50, TimeUnit.MILLISECONDS)) {
+          if (discreteLock.tryLock(50, TimeUnit.MILLISECONDS)) {
             logger.debug("Get a lock of {}", name);
 
             ship.getFoodBlock().extractItems(ModelSettings.SHIP_UNLOAD_COUNT.getValue());
@@ -51,7 +60,7 @@ public class Dock {
               ship.getFoodBlock().getType().toString(), ship.getShipName(),
               storage.getCount(), ship.getFoodBlock().getCount());
 
-            lock.unlock();
+            discreteLock.unlock();
             logger.debug("Release a lock of {}", name);
           } else {
             logger.debug("Didn't get a lock of {}", name);
@@ -66,6 +75,8 @@ public class Dock {
         logger.info("SUCCESS: unloaded {}. {} goes back home!", ship, ship);
       } catch (InterruptedException ex) {
         logger.error(ex.getMessage(), ex);
+      } finally {
+        busyLock.unlock();
       }
     }
   }
@@ -73,7 +84,9 @@ public class Dock {
   public Dock(String name, FoodBlock initialStorage) {
     this.name = name;
     this.storage = initialStorage;
-    this.lock = new ReentrantLock();
+
+    this.discreteLock = new ReentrantLock();
+    this.busyLock = new ReentrantLock();
 
     this.unloadingThreadPool = (ThreadPoolExecutor) Executors.newFixedThreadPool(1);
 
@@ -93,8 +106,12 @@ public class Dock {
     return storage;
   }
 
-  public Lock getLock() {
-    return lock;
+  public Lock getDiscreteLock() {
+    return discreteLock;
+  }
+
+  public Lock getBusyLock() {
+    return busyLock;
   }
 
   public void unloadShip(Ship ship) {

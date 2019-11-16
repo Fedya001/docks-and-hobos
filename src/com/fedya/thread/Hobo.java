@@ -14,8 +14,6 @@ import java.util.List;
 import java.util.Random;
 import java.util.concurrent.Phaser;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
 import org.slf4j.LoggerFactory;
 
 public class Hobo extends Thread implements EventObserver {
@@ -106,7 +104,7 @@ public class Hobo extends Thread implements EventObserver {
           //  then all hobos will wait that hobo, until he comes
           try {
             // Wait a bit to get a lock
-            if (dock.getLock().tryLock(50, TimeUnit.MILLISECONDS)) {
+            if (dock.getDiscreteLock().tryLock(50, TimeUnit.MILLISECONDS)) {
               logger.debug("Get a lock of {} dock", FoodBlock.Type.values()[stealIndex]);
               if (!dock.getStorage().empty()) {
                 dock.getStorage().extractItems(1);
@@ -118,7 +116,7 @@ public class Hobo extends Thread implements EventObserver {
                   dock.getStorage().getCount());
                 burningBarrel.getLatchByType(FoodBlock.Type.values()[stealIndex]).countDown();
               }
-              dock.getLock().unlock();
+              dock.getDiscreteLock().unlock();
               logger.debug("Release {} dock lock", FoodBlock.Type.values()[stealIndex]);
             } else {
               logger.debug("Didn't get a lock of {} dock", FoodBlock.Type.values()[stealIndex]);

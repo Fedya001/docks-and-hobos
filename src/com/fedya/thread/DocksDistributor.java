@@ -4,8 +4,6 @@ import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.Logger;
 import com.fedya.run.ModelSettings;
 import com.fedya.stuff.Dock;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.concurrent.BlockingQueue;
 import org.slf4j.LoggerFactory;
 
@@ -57,7 +55,7 @@ public class DocksDistributor extends Thread {
 
         // DocksDistributor and Dock inner unloading thread interact in the following way:
         // 1. DocksDistributor takes an element from narrowChannel
-        // 2. Then it waits until the inner unloading tread unlocks the targetDock
+        // 2. Then it waits until the inner unloading tread unlocks the targetDock busyLock
         // (note that dock for new arrived ship product type may be free
         // and that is the whole point of running separate thread for unloading instead of
         // simply running unloading code in DocksDistributor thread)
@@ -65,10 +63,10 @@ public class DocksDistributor extends Thread {
         // DocksDistributor locks the Dock and runs the unloading thread
         // (which waits until DockDistributor unlocks the Docks, but it happens in a moment)
         // A bit messy, but it works ... Please, suggest a fix.
-        targetDock.getLock().lock();
+        targetDock.getBusyLock().lock();
         logger.info("Push {} to {}", ship, targetDock.getName());
         targetDock.unloadShip(ship);
-        targetDock.getLock().unlock();
+        targetDock.getBusyLock().unlock();
       } catch (InterruptedException ex) {
         logger.error(ex.getMessage(), ex);
       }
